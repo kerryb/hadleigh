@@ -4,10 +4,18 @@ defmodule Mix.Tasks.Hadleigh do
   use Mix.Task
 
   def run([url]) do
+    path = "hadleigh.csv"
     Application.ensure_all_started(:req)
     req = [http_errors: :raise] |> Req.new() |> ReqEasyHTML.attach()
-    file = File.open!("hadleigh.csv", [:write, :utf8])
-    req |> get_entrants(url) |> CSV.encode() |> Enum.each(&IO.write(file, &1))
+    file = File.open!(path, [:write, :utf8])
+    entrants = get_entrants(req, url)
+
+    for {distance, limit} <- [{5, 200}, {10, 300}] do
+      IO.puts("#{distance} miles has #{remaining_places(distance, entrants, limit)} places left.")
+    end
+
+    entrants |> CSV.encode() |> Enum.each(&IO.write(file, &1))
+    IO.puts("Wrote file: #{path}")
   end
 
   defp get_entrants(req, url) do
@@ -28,5 +36,12 @@ defmodule Mix.Tasks.Hadleigh do
 
   defp extract_fields(tr) do
     Enum.map(tr["td"], &to_string/1)
+  end
+
+  defp remaining_places(distance, entrants, limit) do
+    limit -
+      Enum.count(entrants, fn
+        [_, _, race, _, _] -> race =~ ~r/#{distance} mile/i
+      end)
   end
 end
