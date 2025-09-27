@@ -15,7 +15,7 @@ defmodule Mix.Tasks.Hadleigh do
     body = Req.get!(req, url: url).body
     entrants = Enum.map(body["tbody tr"], &extract_fields/1)
 
-    case Enum.find(body["li.page-item:not(.disabled) a.page-link"], &(to_string(&1) =~ "next")) do
+    case Enum.find(body["li.page-item:not(.disabled) a.page-link"], &(to_string(&1) =~ ~r/next/i)) do
       nil ->
         entrants
 
